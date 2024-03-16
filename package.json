@@ -1,0 +1,10 @@
+{
+  "name": "serverless-open-next",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Deploy Next.js applications using Serverless and Open Next",
+  "main": "src/index.js",
+  "repository": "https://github.com/paneidos/serverless-open-next",
+  "author": "Sernin van de Krol",
+  "license": "MIT"
+}
