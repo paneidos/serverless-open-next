@@ -6,5 +6,12 @@
   "main": "src/index.js",
   "repository": "https://github.com/paneidos/serverless-open-next",
   "author": "Sernin van de Krol",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "serverless": "^3.38.0"
+  },
+  "dependencies": {
+    "archiver": "^5.3.1",
+    "open-next": "^2.3.7"
+  }
 }
