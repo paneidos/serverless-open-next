@@ -12,22 +12,22 @@ export default class ServerlessOpenNext {
             'open-next': {
                 commands: {
                     addFunctions: {lifecycleEvents: ['addFunctions']},
-                    buildFunctions: {lifecycleEvents: ['build', 'package']},
+                    build: {lifecycleEvents: ['build', 'package']},
                 }
             }
         }
 
         this.hooks = {
             "before:package:initialize": () => this.serverless.pluginManager.spawn('open-next:addFunctions'),
-            "before:package:createDeploymentArtifacts": () => this.serverless.pluginManager.spawn('open-next:buildFunctions'),
-            "before:package:function:package": () => this.serverless.pluginManager.spawn('open-next:buildFunctions'),
+            "before:package:createDeploymentArtifacts": () => this.serverless.pluginManager.spawn('open-next:build'),
+            "before:package:function:package": () => this.serverless.pluginManager.spawn('open-next:build'),
             "open-next:addFunctions:addFunctions": this.addFunctions.bind(this),
-            "open-next:buildFunctions:build": this.buildFunctions.bind(this),
-            "open-next:buildFunctions:package": this.packageFunctions.bind(this),
+            "open-next:build:build": this.build.bind(this),
+            "open-next:build:package": this.packageFunctions.bind(this),
         }
     }
 
-    async buildFunctions() {
+    async build() {
         await build({
             dangerous: {
                 disableIncrementalCache: true,
