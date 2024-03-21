@@ -1,6 +1,7 @@
 import { build } from 'open-next/build.js'
 import archiver from 'archiver';
 import fs from 'fs';
+import {StandardCacheBehaviours} from "./cloudfront.js";
 
 export default class ServerlessOpenNext {
     constructor(serverless, options, { log }) {
@@ -75,6 +76,11 @@ export default class ServerlessOpenNext {
     }
 
     async addResources() {
+        const baseCacheBehaviours = StandardCacheBehaviours
+        const cacheBehaviours = [
+            {PathPattern: 'api/*', ...baseCacheBehaviours.serverFunction},
+            {PathPattern: '_next/data/*', ...baseCacheBehaviours.serverFunction},
+        ]
         this.serverless.service.provider.compiledCloudFormationTemplate.Resources['CloudFrontDistribution'] = {
             Type: 'AWS::CloudFront::Distribution',
             Properties: {
@@ -95,14 +101,8 @@ export default class ServerlessOpenNext {
                             }
                         }
                     ],
-                    DefaultCacheBehavior: {
-                        AllowedMethods: ['GET', 'HEAD', 'OPTIONS', 'PUT', 'PATCH', 'POST', 'DELETE'],
-                        CachedMethods: ['GET', 'HEAD', 'OPTIONS'],
-                        CachePolicyId: '4135ea2d-6df8-44a3-9df3-4b5a84be39ad', // CachingDisabled
-                        OriginRequestPolicyId: 'b689b0a8-53d0-40ab-baf2-68738e2966ac', // AllViewerExceptHostHeader
-                        TargetOriginId: 'ServerFunction',
-                        ViewerProtocolPolicy: 'redirect-to-https',
-                    }
+                    DefaultCacheBehavior: baseCacheBehaviours.serverFunction,
+                    CacheBehaviors: cacheBehaviours,
                 }
             },
         }
