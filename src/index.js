@@ -19,6 +19,7 @@ export default class ServerlessOpenNext {
 
         this.hooks = {
             "before:package:initialize": () => this.serverless.pluginManager.spawn('open-next:addFunctions'),
+            "before:package:finalize": this.addResources.bind(this),
             "before:package:createDeploymentArtifacts": () => this.serverless.pluginManager.spawn('open-next:build'),
             "before:package:function:package": () => this.serverless.pluginManager.spawn('open-next:build'),
             "open-next:addFunctions:addFunctions": this.addFunctions.bind(this),
@@ -71,5 +72,43 @@ export default class ServerlessOpenNext {
             }
         }
         this.serverless.service.functions.server = functions.server
+    }
+
+    async addResources() {
+        this.serverless.service.provider.compiledCloudFormationTemplate.Resources['CloudFrontDistribution'] = {
+            Type: 'AWS::CloudFront::Distribution',
+            Properties: {
+                DistributionConfig: {
+                    Enabled: true,
+                    HttpVersion: 'http2and3',
+                    PriceClass: 'PriceClass_100',
+                    IPV6Enabled: true,
+                    Origins: [
+                        {
+                            Id: 'ServerFunction',
+                            CustomOriginConfig: {
+                                OriginProtocolPolicy: 'https-only',
+                                OriginSSLProtocols: ['TLSv1.2']
+                            },
+                            DomainName: {
+                                'Fn::Select': [2, {'Fn::Split': ['/', {'Fn::GetAtt': ['ServerLambdaFunctionUrl', 'FunctionUrl']}]}]
+                            }
+                        }
+                    ],
+                    DefaultCacheBehavior: {
+                        AllowedMethods: ['GET', 'HEAD', 'OPTIONS', 'PUT', 'PATCH', 'POST', 'DELETE'],
+                        CachedMethods: ['GET', 'HEAD', 'OPTIONS'],
+                        CachePolicyId: '4135ea2d-6df8-44a3-9df3-4b5a84be39ad', // CachingDisabled
+                        OriginRequestPolicyId: 'b689b0a8-53d0-40ab-baf2-68738e2966ac', // AllViewerExceptHostHeader
+                        TargetOriginId: 'ServerFunction',
+                        ViewerProtocolPolicy: 'redirect-to-https',
+                    }
+                }
+            },
+        }
+        this.serverless.service.provider.compiledCloudFormationTemplate.Outputs['CloudFrontURL'] = {
+            Description: 'URL of the CloudFront distribution',
+            Value: { 'Fn::GetAtt': ['CloudFrontDistribution', 'DomainName'] }
+        }
     }
 }
