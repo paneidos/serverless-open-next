@@ -69,6 +69,8 @@ export default class ServerlessOpenNext {
             server: {
                 name: `${service}-${stage}-server`,
                 handler: 'index.handler',
+                timeout: 10,
+                memorySize: 1024,
                 events: [],
                 url: true,
                 package: {
@@ -79,11 +81,17 @@ export default class ServerlessOpenNext {
             image: {
                 name: `${service}-${stage}-image`,
                 handler: 'index.handler',
+                timeout: 25,
+                memorySize: 1536,
                 events: [],
                 url: true,
                 package: {
                     individually: true,
                     artifact: '.open-next/image-optimization-function.zip'
+                },
+                environment: {
+                    BUCKET_KEY_PREFIX: '_assets',
+                    BUCKET_NAME: '',
                 }
             }
         }
