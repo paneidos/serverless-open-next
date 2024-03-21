@@ -22,6 +22,14 @@ export const StandardCacheBehaviours = {
         TargetOriginId: 'ServerFunction',
         ViewerProtocolPolicy: 'redirect-to-https',
     },
+    imageFunction: {
+        AllowedMethods: HttpMethods.ReadWrite,
+        CachedMethods: HttpMethods.Read,
+        CachePolicyId: CachePolicies.CachingDisabled,
+        OriginRequestPolicyId: OriginRequestPolicies.AllViewerExceptHostHeader,
+        TargetOriginId: 'ImageFunction',
+        ViewerProtocolPolicy: 'redirect-to-https',
+    },
     staticFiles: {
         AllowedMethods: HttpMethods.Read,
         CachedMethods: HttpMethods.Read,

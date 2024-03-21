@@ -6,6 +6,7 @@ import {StandardCacheBehaviours} from "./cloudfront.js";
 export default class ServerlessOpenNext {
     constructor(serverless, options, { log }) {
         this.serverless = serverless
+        this.provider = this.serverless.getProvider('aws');
         this.options = options
         this.log = log
 
@@ -57,12 +58,16 @@ export default class ServerlessOpenNext {
     async packageFunctions() {
         await Promise.all([
             this.packageFunction('server-function'),
+            this.packageFunction('image-optimization-function'),
         ])
     }
 
     addFunctions() {
+        const service = this.serverless.service.service
+        const stage = this.provider.getStage()
         const functions = {
             server: {
+                name: `${service}-${stage}-server`,
                 handler: 'index.handler',
                 events: [],
                 url: true,
@@ -70,9 +75,22 @@ export default class ServerlessOpenNext {
                     individually: true,
                     artifact: '.open-next/server-function.zip'
                 }
+            },
+            image: {
+                name: `${service}-${stage}-image`,
+                handler: 'index.handler',
+                events: [],
+                url: true,
+                package: {
+                    individually: true,
+                    artifact: '.open-next/image-optimization-function.zip'
+                }
             }
         }
+        this.log(this.serverless.service)
         this.serverless.service.functions.server = functions.server
+        this.serverless.service.functions.image = functions.image
+
     }
 
     async addResources() {
@@ -80,6 +98,7 @@ export default class ServerlessOpenNext {
         const cacheBehaviours = [
             {PathPattern: 'api/*', ...baseCacheBehaviours.serverFunction},
             {PathPattern: '_next/data/*', ...baseCacheBehaviours.serverFunction},
+            {PathPattern: '_next/image*', ...baseCacheBehaviours.imageFunction},
         ]
         this.serverless.service.provider.compiledCloudFormationTemplate.Resources['CloudFrontDistribution'] = {
             Type: 'AWS::CloudFront::Distribution',
@@ -98,6 +117,16 @@ export default class ServerlessOpenNext {
                             },
                             DomainName: {
                                 'Fn::Select': [2, {'Fn::Split': ['/', {'Fn::GetAtt': ['ServerLambdaFunctionUrl', 'FunctionUrl']}]}]
+                            }
+                        },
+                        {
+                            Id: 'ImageFunction',
+                            CustomOriginConfig: {
+                                OriginProtocolPolicy: 'https-only',
+                                OriginSSLProtocols: ['TLSv1.2']
+                            },
+                            DomainName: {
+                                'Fn::Select': [2, {'Fn::Split': ['/', {'Fn::GetAtt': ['ImageLambdaFunctionUrl', 'FunctionUrl']}]}]
                             }
                         }
                     ],
