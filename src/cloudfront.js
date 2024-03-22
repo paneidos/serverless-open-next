@@ -39,3 +39,26 @@ export const StandardCacheBehaviours = {
         ViewerProtocolPolicy: 'redirect-to-https',
     }
 }
+
+export const StandardOrigins = {
+    imageFunction: {
+        Id: 'ImageFunction',
+        CustomOriginConfig: {
+            OriginProtocolPolicy: 'https-only',
+            OriginSSLProtocols: ['TLSv1.2']
+        },
+        DomainName: {
+            'Fn::Select': [2, {'Fn::Split': ['/', {'Fn::GetAtt': ['ImageLambdaFunctionUrl', 'FunctionUrl']}]}]
+        }
+    },
+    serverFunction: {
+        Id: 'ServerFunction',
+        CustomOriginConfig: {
+            OriginProtocolPolicy: 'https-only',
+            OriginSSLProtocols: ['TLSv1.2']
+        },
+        DomainName: {
+            'Fn::Select': [2, {'Fn::Split': ['/', {'Fn::GetAtt': ['ServerLambdaFunctionUrl', 'FunctionUrl']}]}]
+        }
+    },
+}

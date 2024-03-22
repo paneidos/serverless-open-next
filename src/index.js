@@ -1,7 +1,7 @@
 import { build } from 'open-next/build.js'
 import archiver from 'archiver';
 import fs from 'fs';
-import {StandardCacheBehaviours} from "./cloudfront.js";
+import { StandardCacheBehaviours, StandardOrigins } from "./cloudfront.js";
 
 export default class ServerlessOpenNext {
     constructor(serverless, options, { log }) {
@@ -117,26 +117,8 @@ export default class ServerlessOpenNext {
                     PriceClass: 'PriceClass_100',
                     IPV6Enabled: true,
                     Origins: [
-                        {
-                            Id: 'ServerFunction',
-                            CustomOriginConfig: {
-                                OriginProtocolPolicy: 'https-only',
-                                OriginSSLProtocols: ['TLSv1.2']
-                            },
-                            DomainName: {
-                                'Fn::Select': [2, {'Fn::Split': ['/', {'Fn::GetAtt': ['ServerLambdaFunctionUrl', 'FunctionUrl']}]}]
-                            }
-                        },
-                        {
-                            Id: 'ImageFunction',
-                            CustomOriginConfig: {
-                                OriginProtocolPolicy: 'https-only',
-                                OriginSSLProtocols: ['TLSv1.2']
-                            },
-                            DomainName: {
-                                'Fn::Select': [2, {'Fn::Split': ['/', {'Fn::GetAtt': ['ImageLambdaFunctionUrl', 'FunctionUrl']}]}]
-                            }
-                        }
+                        StandardOrigins.serverFunction,
+                        StandardOrigins.imageFunction,
                     ],
                     DefaultCacheBehavior: baseCacheBehaviours.serverFunction,
                     CacheBehaviors: cacheBehaviours,
