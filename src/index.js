@@ -2,6 +2,7 @@ import { build } from 'open-next/build.js'
 import archiver from 'archiver';
 import fs from 'fs';
 import { StandardCacheBehaviours, StandardOrigins } from "./cloudfront.js";
+import { StandardAssetsBucket, StandardAssetsBucketPolicy } from "./s3.js";
 
 export default class ServerlessOpenNext {
     constructor(serverless, options, { log }) {
@@ -101,6 +102,14 @@ export default class ServerlessOpenNext {
 
     }
 
+    async addResource(logicalId, config) {
+        this.serverless.service.provider.compiledCloudFormationTemplate.Resources[logicalId] = config
+    }
+
+    async addOutput(logicalId, config) {
+        this.serverless.service.provider.compiledCloudFormationTemplate.Outputs[logicalId] = config
+    }
+
     async addResources() {
         const baseCacheBehaviours = StandardCacheBehaviours
         const cacheBehaviours = [
@@ -108,7 +117,15 @@ export default class ServerlessOpenNext {
             {PathPattern: '_next/data/*', ...baseCacheBehaviours.serverFunction},
             {PathPattern: '_next/image*', ...baseCacheBehaviours.imageFunction},
         ]
-        this.serverless.service.provider.compiledCloudFormationTemplate.Resources['CloudFrontDistribution'] = {
+        this.addResource('AssetsBucket', {
+            Type: 'AWS::S3::Bucket',
+            Properties: StandardAssetsBucket,
+        })
+        this.addResource('AssetsBucketPolicy', {
+            Type: 'AWS::S3::BucketPolicy',
+            Properties: StandardAssetsBucketPolicy,
+        })
+        this.addResource('CloudFrontDistribution', {
             Type: 'AWS::CloudFront::Distribution',
             Properties: {
                 DistributionConfig: {
@@ -124,10 +141,10 @@ export default class ServerlessOpenNext {
                     CacheBehaviors: cacheBehaviours,
                 }
             },
-        }
-        this.serverless.service.provider.compiledCloudFormationTemplate.Outputs['CloudFrontURL'] = {
+        })
+        this.addOutput('CloudFrontURL', {
             Description: 'URL of the CloudFront distribution',
             Value: { 'Fn::GetAtt': ['CloudFrontDistribution', 'DomainName'] }
-        }
+        })
     }
 }
