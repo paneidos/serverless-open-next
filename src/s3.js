@@ -1,4 +1,4 @@
-export const StandardAssetsBucket = {
+export const StandardSiteBucket = {
     BucketEncryption: {
         ServerSideEncryptionConfiguration: [{
             ServerSideEncryptionByDefault: {
@@ -7,8 +7,8 @@ export const StandardAssetsBucket = {
         }]
     }
 }
-export const StandardAssetsBucketPolicy = {
-    Bucket: { Ref: 'AssetsBucket' },
+export const StandardSiteBucketPolicy = {
+    Bucket: { Ref: 'SiteBucket' },
     PolicyDocument: {
         Id: 'BucketPolicy',
         Version: '2012-10-17',
@@ -20,7 +20,7 @@ export const StandardAssetsBucketPolicy = {
             },
             Action: 's3:GetObject',
             Resource: [{
-                'Fn::Sub': '${AssetsBucket.Arn}/*'
+                'Fn::Sub': '${SiteBucket.Arn}/_assets/*'
             }],
             Condition: {
                 StringEquals: {

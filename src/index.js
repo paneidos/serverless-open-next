@@ -2,7 +2,7 @@ import { build } from 'open-next/build.js'
 import archiver from 'archiver';
 import fs from 'fs';
 import { StandardCacheBehaviours, StandardOrigins } from "./cloudfront.js";
-import { StandardAssetsBucket, StandardAssetsBucketPolicy } from "./s3.js";
+import { StandardSiteBucket, StandardSiteBucketPolicy } from "./s3.js";
 
 export default class ServerlessOpenNext {
     constructor(serverless, options, { log }) {
@@ -96,7 +96,6 @@ export default class ServerlessOpenNext {
                 }
             }
         }
-        this.log(this.serverless.service)
         this.serverless.service.functions.server = functions.server
         this.serverless.service.functions.image = functions.image
 
@@ -117,13 +116,13 @@ export default class ServerlessOpenNext {
             {PathPattern: '_next/data/*', ...baseCacheBehaviours.serverFunction},
             {PathPattern: '_next/image*', ...baseCacheBehaviours.imageFunction},
         ]
-        this.addResource('AssetsBucket', {
+        this.addResource('SiteBucket', {
             Type: 'AWS::S3::Bucket',
-            Properties: StandardAssetsBucket,
+            Properties: StandardSiteBucket,
         })
-        this.addResource('AssetsBucketPolicy', {
+        this.addResource('SiteBucketPolicy', {
             Type: 'AWS::S3::BucketPolicy',
-            Properties: StandardAssetsBucketPolicy,
+            Properties: StandardSiteBucketPolicy,
         })
         this.addResource('CloudFrontDistribution', {
             Type: 'AWS::CloudFront::Distribution',
@@ -145,6 +144,10 @@ export default class ServerlessOpenNext {
         this.addOutput('CloudFrontURL', {
             Description: 'URL of the CloudFront distribution',
             Value: { 'Fn::GetAtt': ['CloudFrontDistribution', 'DomainName'] }
+        })
+        this.addOutput('SiteBucketName', {
+            Description: 'Name of the site bucket',
+            Value: { Ref: 'SiteBucket' }
         })
     }
 }
