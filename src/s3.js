@@ -32,3 +32,8 @@ export const StandardSiteBucketPolicy = {
         }]
     }
 }
+
+export const StandardCacheControl = {
+    normal: 'public,max-age=0,s-maxage=86400,stale-while-revalidate=8640',
+    immutable: 'public,max-age=31536000,immutable',
+}

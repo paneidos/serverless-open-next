@@ -1,8 +1,9 @@
 import { build } from 'open-next/build.js'
 import archiver from 'archiver';
 import fs from 'fs';
+import { readdir, readFile } from 'fs/promises';
 import { StandardCacheBehaviours, StandardOrigins } from "./cloudfront.js";
-import { StandardSiteBucket, StandardSiteBucketPolicy } from "./s3.js";
+import {StandardCacheControl, StandardSiteBucket, StandardSiteBucketPolicy} from "./s3.js";
 
 export default class ServerlessOpenNext {
     constructor(serverless, options, { log }) {
@@ -16,6 +17,7 @@ export default class ServerlessOpenNext {
                 commands: {
                     addFunctions: {lifecycleEvents: ['addFunctions']},
                     build: {lifecycleEvents: ['build', 'package']},
+                    upload: {lifecycleEvents: ['upload']},
                 }
             }
         }
@@ -25,9 +27,11 @@ export default class ServerlessOpenNext {
             "before:package:finalize": this.addResources.bind(this),
             "before:package:createDeploymentArtifacts": () => this.serverless.pluginManager.spawn('open-next:build'),
             "before:package:function:package": () => this.serverless.pluginManager.spawn('open-next:build'),
+            "after:deploy:deploy": () => this.serverless.pluginManager.spawn('open-next:upload'),
             "open-next:addFunctions:addFunctions": this.addFunctions.bind(this),
             "open-next:build:build": this.build.bind(this),
             "open-next:build:package": this.packageFunctions.bind(this),
+            "open-next:upload:upload": this.uploadAssets.bind(this),
         }
     }
 
@@ -61,6 +65,40 @@ export default class ServerlessOpenNext {
             this.packageFunction('server-function'),
             this.packageFunction('image-optimization-function'),
         ])
+    }
+
+    async getStackOutputs() {
+        const stackName = this.provider.naming.getStackName();
+        const result = await this.provider.request('CloudFormation', 'describeStacks', { StackName: stackName });
+        return result.Stacks[0].Outputs.reduce((obj, output) => {
+            return {
+                ...obj,
+                [output.OutputKey]: output.OutputValue,
+            }
+        }, {});
+    }
+
+    async uploadAssets() {
+        const outputs = await this.getStackOutputs();
+        const bucketName = outputs.SiteBucketName;
+        const files = await readdir('.open-next/assets', { recursive: true, withFileTypes: true });
+        const cacheControls = StandardCacheControl;
+        for (const file of files) {
+            if (!file.isFile()) {
+                continue;
+            }
+            const fullPath = file.path + '/' + file.name
+            const baseKey = fullPath.substring(18)
+            const targetKey = '_assets/' + baseKey
+            const cacheControl = baseKey.startsWith('_next/') ? cacheControls.immutable : cacheControls.normal
+            const params = {
+                Body: await readFile(fullPath),
+                Bucket: bucketName,
+                Key: targetKey,
+                CacheControl: cacheControl
+            }
+            await this.provider.request('S3', 'putObject', params);
+        }
     }
 
     addFunctions() {
