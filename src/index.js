@@ -25,6 +25,8 @@ export default class ServerlessOpenNext {
 
         this.hooks = {
             "before:package:initialize": () => this.serverless.pluginManager.spawn('open-next:addFunctions'),
+            "before:info:info": () => this.serverless.pluginManager.spawn('open-next:addFunctions'),
+            "after:aws:info:displayEndpoints": this.addSiteUrl.bind(this),
             "before:package:finalize": this.addResources.bind(this),
             "before:package:createDeploymentArtifacts": () => this.serverless.pluginManager.spawn('open-next:build'),
             "before:package:function:package": () => this.serverless.pluginManager.spawn('open-next:build'),
@@ -71,12 +73,22 @@ export default class ServerlessOpenNext {
     async getStackOutputs() {
         const stackName = this.provider.naming.getStackName();
         const result = await this.provider.request('CloudFormation', 'describeStacks', { StackName: stackName });
+        if (result.Stacks.length === 0) {
+            return {}
+        }
         return result.Stacks[0].Outputs.reduce((obj, output) => {
             return {
                 ...obj,
                 [output.OutputKey]: output.OutputValue,
             }
         }, {});
+    }
+
+    async addSiteUrl() {
+        const outputs = await this.getStackOutputs()
+        if (outputs.SiteURL !== undefined) {
+            this.serverless.serviceOutputs.set('site', outputs.SiteURL)
+        }
     }
 
     async uploadAssets() {
@@ -225,9 +237,13 @@ export default class ServerlessOpenNext {
                 }
             },
         })
-        this.addOutput('CloudFrontURL', {
+        this.addOutput('CloudFrontDomain', {
             Description: 'URL of the CloudFront distribution',
             Value: { 'Fn::GetAtt': ['CloudFrontDistribution', 'DomainName'] }
+        })
+        this.addOutput('SiteURL', {
+            Description: 'URL of the CloudFront distribution',
+            Value: { 'Fn::Sub': "https://${CloudFrontDistribution.DomainName}" }
         })
         this.addOutput('SiteBucketName', {
             Description: 'Name of the site bucket',
