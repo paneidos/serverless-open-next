@@ -127,6 +127,7 @@ export default class ServerlessOpenNext {
             image: {
                 name: `${service}-${stage}-image`,
                 handler: 'index.handler',
+                architecture: 'arm64',
                 timeout: 25,
                 memorySize: 1536,
                 events: [],
