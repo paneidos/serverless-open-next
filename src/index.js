@@ -194,6 +194,18 @@ export default class ServerlessOpenNext {
                 }
             },
         })
+        this.addResource('HostHeaderFunction', {
+            Type: 'AWS::CloudFront::Function',
+            Properties: {
+                AutoPublish: true,
+                FunctionCode: 'function handler(event) { var request = event.request; request.headers["x-forwarded-host"] = request.headers.host; return request; }',
+                FunctionConfig: {
+                    Comment: 'Forward host header',
+                    Runtime: 'cloudfront-js-2.0',
+                },
+                Name: { 'Fn::Sub': "${AWS::StackName}-${AWS::Region}-host" }
+            }
+        })
         this.addResource('CloudFrontDistribution', {
             Type: 'AWS::CloudFront::Distribution',
             Properties: {

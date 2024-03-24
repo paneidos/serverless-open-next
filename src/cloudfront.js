@@ -21,6 +21,10 @@ export const StandardCacheBehaviours = {
         OriginRequestPolicyId: OriginRequestPolicies.AllViewerExceptHostHeader,
         TargetOriginId: 'ServerFunction',
         ViewerProtocolPolicy: 'redirect-to-https',
+        FunctionAssociations: [{
+            EventType: 'viewer-request',
+            FunctionARN: { 'Fn::GetAtt': ['HostHeaderFunction', 'FunctionMetadata.FunctionARN'] }
+        }],
     },
     imageFunction: {
         AllowedMethods: HttpMethods.ReadWrite,
@@ -29,6 +33,10 @@ export const StandardCacheBehaviours = {
         OriginRequestPolicyId: OriginRequestPolicies.AllViewerExceptHostHeader,
         TargetOriginId: 'ImageFunction',
         ViewerProtocolPolicy: 'redirect-to-https',
+        FunctionAssociations: [{
+            EventType: 'viewer-request',
+            FunctionARN: { 'Fn::GetAtt': ['HostHeaderFunction', 'FunctionMetadata.FunctionARN'] }
+        }],
     },
     staticFiles: {
         AllowedMethods: HttpMethods.Read,
