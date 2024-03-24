@@ -118,6 +118,7 @@ export default class ServerlessOpenNext {
     addFunctions() {
         const service = this.serverless.service.service
         const stage = this.provider.getStage()
+        const clearDefaultEnvironment = Object.fromEntries(Object.keys(this.serverless.service.provider.environment).map(key => [key, null]))
         const functions = {
             server: {
                 name: `${service}-${stage}-server`,
@@ -150,6 +151,7 @@ export default class ServerlessOpenNext {
                     artifact: '.open-next/image-optimization-function.zip'
                 },
                 environment: {
+                    ...clearDefaultEnvironment,
                     BUCKET_KEY_PREFIX: '_assets',
                     BUCKET_NAME: { Ref: 'SiteBucket' },
                 }
