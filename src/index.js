@@ -2,6 +2,7 @@ import { build } from 'open-next/build.js'
 import archiver from 'archiver';
 import fs from 'fs';
 import { readdir, readFile } from 'fs/promises';
+import mime from 'mime';
 import { StandardCacheBehaviours, StandardOrigins } from "./cloudfront.js";
 import {StandardCacheControl, StandardSiteBucket, StandardSiteBucketPolicy} from "./s3.js";
 
@@ -95,7 +96,8 @@ export default class ServerlessOpenNext {
                 Body: await readFile(fullPath),
                 Bucket: bucketName,
                 Key: targetKey,
-                CacheControl: cacheControl
+                CacheControl: cacheControl,
+                ContentType: mime.getType(fullPath)
             }
             await this.provider.request('S3', 'putObject', params);
         }
