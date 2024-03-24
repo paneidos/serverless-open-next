@@ -1,6 +1,7 @@
 export const CachePolicies = {
     CachingDisabled: '4135ea2d-6df8-44a3-9df3-4b5a84be39ad',
     CachingOptimized: '658327ea-f89d-4fab-a63d-7e88639e58f6',
+    ServerFunction: { Ref: 'ServerCachePolicy' },
 }
 
 export const OriginRequestPolicies = {
@@ -17,7 +18,7 @@ export const StandardCacheBehaviours = {
     serverFunction: {
         AllowedMethods: HttpMethods.ReadWrite,
         CachedMethods: HttpMethods.Read,
-        CachePolicyId: CachePolicies.CachingDisabled,
+        CachePolicyId: CachePolicies.ServerFunction,
         OriginRequestPolicyId: OriginRequestPolicies.AllViewerExceptHostHeader,
         TargetOriginId: 'ServerFunction',
         ViewerProtocolPolicy: 'redirect-to-https',
@@ -29,7 +30,7 @@ export const StandardCacheBehaviours = {
     imageFunction: {
         AllowedMethods: HttpMethods.ReadWrite,
         CachedMethods: HttpMethods.Read,
-        CachePolicyId: CachePolicies.CachingDisabled,
+        CachePolicyId: CachePolicies.ServerFunction,
         OriginRequestPolicyId: OriginRequestPolicies.AllViewerExceptHostHeader,
         TargetOriginId: 'ImageFunction',
         ViewerProtocolPolicy: 'redirect-to-https',

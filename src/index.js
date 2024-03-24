@@ -219,6 +219,32 @@ export default class ServerlessOpenNext {
                 Name: { 'Fn::Sub': "${AWS::StackName}-${AWS::Region}-host" }
             }
         })
+        this.addResource('ServerCachePolicy', {
+            Type: 'AWS::CloudFront::CachePolicy',
+            Properties: {
+                CachePolicyConfig: {
+                    Name: { 'Fn::Sub': "${AWS::StackName}-${AWS::Region}-server-cache" },
+                    Comment: 'Cache policy for Next.js server function',
+                    MinTTL: 0,
+                    MaxTTL: 31536000,
+                    DefaultTTL: 0,
+                    ParametersInCacheKeyAndForwardedToOrigin: {
+                        CookiesConfig: {
+                            CookieBehavior: 'none'
+                        },
+                        EnableAcceptEncodingBrotli: true,
+                        EnableAcceptEncodingGzip: true,
+                        HeadersConfig: {
+                            HeaderBehavior: 'whitelist',
+                            Headers: ['next-url', 'rsc', 'next-router-prefetch', 'next-router-state-tree', 'accept'],
+                        },
+                        QueryStringsConfig: {
+                            QueryStringBehavior: 'all'
+                        },
+                    }
+                },
+            }
+        })
         this.addResource('CloudFrontDistribution', {
             Type: 'AWS::CloudFront::Distribution',
             Properties: {
