@@ -117,6 +117,11 @@ export default class ServerlessOpenNext {
                 package: {
                     individually: true,
                     artifact: '.open-next/server-function.zip'
+                },
+                environment: {
+                    CACHE_BUCKET_KEY_PREFIX: '_cache',
+                    CACHE_BUCKET_NAME: { Ref: 'SiteBucket' },
+                    CACHE_BUCKET_REGION: { Ref: 'AWS::Region' },
                 }
             },
             image: {
