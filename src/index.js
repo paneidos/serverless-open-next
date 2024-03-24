@@ -154,6 +154,15 @@ export default class ServerlessOpenNext {
             {PathPattern: '_next/data/*', ...baseCacheBehaviours.serverFunction},
             {PathPattern: '_next/image*', ...baseCacheBehaviours.imageFunction},
         ]
+        const files = await readdir('.open-next/assets', { withFileTypes: true });
+        for (const file of files) {
+            if (file.isFile() || file.isDirectory()) {
+                cacheBehaviours.push({
+                    PathPattern: file.name + (file.isDirectory() ? '/*' : ''),
+                    ...baseCacheBehaviours.staticFiles
+                })
+            }
+        }
         this.addResource('SiteBucket', {
             Type: 'AWS::S3::Bucket',
             Properties: StandardSiteBucket,
@@ -161,6 +170,22 @@ export default class ServerlessOpenNext {
         this.addResource('SiteBucketPolicy', {
             Type: 'AWS::S3::BucketPolicy',
             Properties: StandardSiteBucketPolicy,
+        })
+        this.addResource('OriginAccessControl', {
+            Type: 'AWS::CloudFront::OriginAccessControl',
+            Properties: {
+                OriginAccessControlConfig: {
+                    "Description" : {
+                        'Fn::Sub': "Used by ${AWS::StackName}-${AWS::Region}"
+                    },
+                    "Name" : {
+                        'Fn::Sub': "${AWS::StackName}-${AWS::Region}"
+                    },
+                    "OriginAccessControlOriginType" : 's3',
+                    "SigningBehavior" : 'always',
+                    "SigningProtocol" : 'sigv4',
+                }
+            },
         })
         this.addResource('CloudFrontDistribution', {
             Type: 'AWS::CloudFront::Distribution',
@@ -173,6 +198,7 @@ export default class ServerlessOpenNext {
                     Origins: [
                         StandardOrigins.serverFunction,
                         StandardOrigins.imageFunction,
+                        StandardOrigins.staticFiles,
                     ],
                     DefaultCacheBehavior: baseCacheBehaviours.serverFunction,
                     CacheBehaviors: cacheBehaviours,

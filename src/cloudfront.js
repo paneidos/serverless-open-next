@@ -34,7 +34,6 @@ export const StandardCacheBehaviours = {
         AllowedMethods: HttpMethods.Read,
         CachedMethods: HttpMethods.Read,
         CachePolicyId: CachePolicies.CachingOptimized,
-        OriginRequestPolicyId: OriginRequestPolicies.CORS_S3Origin,
         TargetOriginId: 'StaticFiles',
         ViewerProtocolPolicy: 'redirect-to-https',
     }
@@ -60,5 +59,18 @@ export const StandardOrigins = {
         DomainName: {
             'Fn::Select': [2, {'Fn::Split': ['/', {'Fn::GetAtt': ['ServerLambdaFunctionUrl', 'FunctionUrl']}]}]
         }
+    },
+    staticFiles: {
+        Id: 'StaticFiles',
+        OriginAccessControlId: {
+            'Fn::GetAtt': ['OriginAccessControl', 'Id'],
+        },
+        S3OriginConfig: {
+            OriginAccessIdentity: '',
+        },
+        DomainName: {
+            'Fn::GetAtt': ['SiteBucket', 'RegionalDomainName']
+        },
+        OriginPath: '/_assets',
     },
 }
