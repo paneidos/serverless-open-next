@@ -132,7 +132,7 @@ export default class ServerlessOpenNext {
                 },
                 environment: {
                     BUCKET_KEY_PREFIX: '_assets',
-                    BUCKET_NAME: '',
+                    BUCKET_NAME: { Ref: 'SiteBucket' },
                 }
             }
         }
