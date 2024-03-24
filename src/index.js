@@ -146,11 +146,11 @@ export default class ServerlessOpenNext {
 
     }
 
-    async addResource(logicalId, config) {
+    addResource(logicalId, config) {
         this.serverless.service.provider.compiledCloudFormationTemplate.Resources[logicalId] = config
     }
 
-    async addOutput(logicalId, config) {
+    addOutput(logicalId, config) {
         this.serverless.service.provider.compiledCloudFormationTemplate.Outputs[logicalId] = config
     }
 
