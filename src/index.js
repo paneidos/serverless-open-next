@@ -140,6 +140,7 @@ export default class ServerlessOpenNext {
                 name: `${service}-${stage}-image`,
                 handler: 'index.handler',
                 architecture: 'arm64',
+                role: 'ImageFunctionRole',
                 timeout: 25,
                 memorySize: 1536,
                 events: [],
@@ -183,6 +184,62 @@ export default class ServerlessOpenNext {
                 })
             }
         }
+        this.addResource('ImageFunctionRole', {
+            Type: 'AWS::IAM::Role',
+            Properties: {
+                AssumeRolePolicyDocument: {
+                    Version: "2012-10-17",
+                    Statement: [
+                        {
+                            Effect: "Allow",
+                            Principal: {
+                                Service: ["lambda.amazonaws.com"]
+                            },
+                            Action: ["sts:AssumeRole"]
+                        }
+                    ]
+                },
+                Path: "/",
+                RoleName: {
+                    "Fn::Sub": "${AWS::StackName}-${AWS::Region}-image-role"
+                },
+                Policies: [{
+                    PolicyName: {
+                        "Fn::Sub": "${AWS::StackName}-image-lambda"
+                    },
+                    PolicyDocument: {
+                        Version: '2012-10-17',
+                        Statement: [{
+                            Effect: 'Allow',
+                            Action: [
+                                'logs:CreateLogStream',
+                                'logs:CreateLogGroup',
+                                'logs:TagResource',
+                            ],
+                            Resource: [{
+                                'Fn::Sub': "${ImageLogGroup.Arn}"
+                            }]
+                        }, {
+                            Effect: 'Allow',
+                            Action: [
+                                'logs:PutLogEvents',
+                            ],
+                            Resource: [{
+                                'Fn::Sub': "${ImageLogGroup.Arn}:*"
+                            }]
+                        }, {
+                            Effect: 'Allow',
+                            Action: [
+                                's3:getObject',
+                            ],
+                            Resource: [{
+                                'Fn::Sub': "${SiteBucket.Arn}/*"
+                            }]
+                        }]
+                    }
+                }],
+            },
+        })
         this.addResource('SiteBucket', {
             Type: 'AWS::S3::Bucket',
             Properties: StandardSiteBucket,
