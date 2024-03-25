@@ -19,6 +19,7 @@ export default class ServerlessOpenNext {
                     addFunctions: {lifecycleEvents: ['addFunctions']},
                     build: {lifecycleEvents: ['build', 'package']},
                     upload: {lifecycleEvents: ['upload']},
+                    invalidate: {lifecycleEvents: ['invalidate']},
                 }
             }
         }
@@ -35,6 +36,7 @@ export default class ServerlessOpenNext {
             "open-next:build:build": this.build.bind(this),
             "open-next:build:package": this.packageFunctions.bind(this),
             "open-next:upload:upload": this.uploadAssets.bind(this),
+            "open-next:invalidate:invalidate": this.createInvalidation.bind(this),
         }
     }
 
@@ -82,6 +84,25 @@ export default class ServerlessOpenNext {
                 [output.OutputKey]: output.OutputValue,
             }
         }, {});
+    }
+
+    async createInvalidation() {
+        const stackName = this.provider.naming.getStackName();
+        const result = await this.provider.request('CloudFormation', 'describeStackResources', { StackName: stackName });
+        const distribution = result.StackResources.find(resource => resource.LogicalResourceId === 'CloudFrontDistribution')
+        const distributionId = distribution?.PhysicalResourceId
+        if (distributionId != null) {
+            await this.provider.request('CloudFront', 'createInvalidation', {
+                DistributionId: distributionId,
+                InvalidationBatch: {
+                    CallerReference: (new Date()).toISOString(),
+                    Paths: {
+                        Quantity: 1,
+                        Items: ['/*']
+                    }
+                }
+            })
+        }
     }
 
     async addSiteUrl() {
