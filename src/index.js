@@ -343,6 +343,46 @@ export default class ServerlessOpenNext {
                 }
             },
         })
+        this.addResource('ServerFunctionPolicy', {
+            Type: 'AWS::IAM::Policy',
+            Properties: {
+                Roles: [{
+                    Ref: 'IamRoleLambdaExecution'
+                }],
+                PolicyName: { 'Fn::Sub': "${AWS::StackName}-server-lambda" },
+                PolicyDocument: {
+                    Version: '2012-10-17',
+                    Statement: [{
+                        Effect: 'Allow',
+                        Action: [
+                            "s3:GetObject*",
+                            "s3:GetBucket*",
+                            "s3:List*",
+                            "s3:DeleteObject*",
+                            "s3:PutObject",
+                            "s3:PutObjectLegalHold",
+                            "s3:PutObjectRetention",
+                            "s3:PutObjectTagging",
+                            "s3:PutObjectVersionTagging",
+                            "s3:Abort*"
+                        ],
+                        Resource: [{
+                            'Fn::GetAtt': ['SiteBucket', 'Arn']
+                        }, {
+                            'Fn::Sub': "${SiteBucket.Arn}/*"
+                        }]
+                    }, {
+                        Effect: 'Allow',
+                        Action: [
+                            "cloudfront:CreateInvalidation",
+                        ],
+                        Resource: [{
+                            'Fn::Sub': "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+                        }]
+                    }]
+                }
+            }
+        })
         this.addOutput('CloudFrontDomain', {
             Description: 'URL of the CloudFront distribution',
             Value: { 'Fn::GetAtt': ['CloudFrontDistribution', 'DomainName'] }
