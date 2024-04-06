@@ -49,6 +49,11 @@ export default class ServerlessOpenNext {
         })
     }
 
+    get customConfig() {
+        const custom = this.serverless.service.custom ?? {}
+        return custom['open-next'] ?? {}
+    }
+
     packageFunction(name) {
         return new Promise((resolve, reject) => {
             const archive = archiver('zip', {})
@@ -325,22 +330,37 @@ export default class ServerlessOpenNext {
                 },
             }
         })
+        const distributionConfig = {
+            Enabled: true,
+            HttpVersion: 'http2and3',
+            PriceClass: 'PriceClass_100',
+            IPV6Enabled: true,
+            Origins: [
+                StandardOrigins.serverFunction,
+                StandardOrigins.imageFunction,
+                StandardOrigins.staticFiles,
+            ],
+            DefaultCacheBehavior: baseCacheBehaviours.serverFunction,
+            CacheBehaviors: cacheBehaviours,
+        }
+        const aliases = this.customConfig.aliases
+        const certificate = this.customConfig.certificate;
+        if (aliases && certificate) {
+            if (typeof aliases === 'string') {
+                distributionConfig.Aliases = aliases.split(',')
+            } else {
+                distributionConfig.Aliases = aliases
+            }
+            distributionConfig.ViewerCertificate = {
+                AcmCertificateArn: certificate,
+                MinimumProtocolVersion: 'TLSv1.2_2021',
+                SslSupportMethod: 'sni-only'
+            }
+        }
         this.addResource('CloudFrontDistribution', {
             Type: 'AWS::CloudFront::Distribution',
             Properties: {
-                DistributionConfig: {
-                    Enabled: true,
-                    HttpVersion: 'http2and3',
-                    PriceClass: 'PriceClass_100',
-                    IPV6Enabled: true,
-                    Origins: [
-                        StandardOrigins.serverFunction,
-                        StandardOrigins.imageFunction,
-                        StandardOrigins.staticFiles,
-                    ],
-                    DefaultCacheBehavior: baseCacheBehaviours.serverFunction,
-                    CacheBehaviors: cacheBehaviours,
-                }
+                DistributionConfig: distributionConfig
             },
         })
         this.addResource('ServerFunctionPolicy', {
