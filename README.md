@@ -30,6 +30,31 @@ yarn exec serverless deploy --stage dev
 npm exec -- serverless deploy --stage dev
 ```
 
+# Customisation
+
+## Custom domain name
+
+To assign a custom domain to your CloudFront distribution,
+you need to request a certificate in the us-east-1 region.
+Once that is issued, you can assign the ARN and domains to
+the deployed CloudFront distribution by adding the following to
+`serverless.yml`:
+
+```yaml
+custom:
+  open-next:
+    aliases: ...  # Specify the domains you want to assign to CloudFront as a comma-separated string or array
+    # Examples:
+    # aliases: primary.tld
+    # aliases: primary.tld,www.primary.tld
+    # aliases: [primary.tld, www.primary.tld]
+    # aliases: !Ref MyDomainParameter
+    certificate: ...  # Specify the ARN of the certificate to assign to CloudFront
+```
+
+Tip: you can use Serverless Compose to deploy the certificate to us-east-1,
+and deploy the app to another region.
+
 # Architecture
 
 This package will deploy several resources to your AWS account,
