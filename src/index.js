@@ -141,10 +141,16 @@ export default class ServerlessOpenNext {
         }
     }
 
+    get clearedDefaultEnvironment() {
+        // We can be sure that service.provider exists, but environment might be undefined
+        const keys = Object.keys(this.serverless.service.provider.environment ?? {})
+        return Object.fromEntries(keys.map(key => [key, null]))
+    }
+
     addFunctions() {
         const service = this.serverless.service.service
         const stage = this.provider.getStage()
-        const clearDefaultEnvironment = Object.fromEntries(Object.keys(this.serverless.service.provider.environment).map(key => [key, null]))
+        const clearDefaultEnvironment = this.clearedDefaultEnvironment
         const functions = {
             server: {
                 name: `${service}-${stage}-server`,
